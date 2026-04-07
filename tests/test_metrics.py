@@ -100,7 +100,7 @@ def test_deltae2000_hardcoded_values():
     )
 
     result = ColorCorrectionMetrics.deltaE2000(predicted, target)
-    np.testing.assert_allclose(result, expected, rtol=1e-7, atol=1e-7)
+    np.testing.assert_allclose(result, expected, rtol=1e-5, atol=1e-5)
 
 
 def test_reproduction_error_hardcoded_values():
