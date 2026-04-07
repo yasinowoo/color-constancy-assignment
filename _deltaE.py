@@ -1,58 +1,5 @@
 import numpy as np
 
-# ==========================================
-# Part 1: Color Space Conversions
-# ==========================================
-
-def rgb_to_linear_rgb(image: np.ndarray) -> np.ndarray:
-    """
-    Convert an sRGB image to Linear RGB.
-    
-    Args:
-        image: sRGB image with shape (*, H, W, 3).
-    
-    Returns:
-        Linear RGB image with shape (*, H, W, 3).
-    """
-    if not isinstance(image, np.ndarray):
-        raise TypeError(f"Input type is not a np.ndarray. Got {type(image)}")
-
-    lin_rgb = np.where(
-        image <= 0.04045,
-        image / 12.92,
-        np.power((image + 0.055) / 1.055, 2.4)
-    )
-    return lin_rgb.astype(np.float32, copy=False)
-
-
-def rgb_to_xyz(image: np.ndarray) -> np.ndarray:
-    """
-    Convert a Linear RGB image to XYZ.
-    
-    Args:
-        image: Linear RGB image with shape (*, H, W, 3).
-    
-    Returns:
-        XYZ image with shape (*, H, W, 3).
-    """
-    if not isinstance(image, np.ndarray):
-        raise TypeError(f"Input type is not a np.ndarray. Got {type(image)}")
-
-    if image.ndim < 3 or image.shape[-1] != 3:
-        raise ValueError(f"Input size must have a shape of (*, H, W, 3). Got {image.shape}")
-
-    # Coefficients for RGB to XYZ conversion
-    r = image[..., 0]
-    g = image[..., 1]
-    b = image[..., 2]
-
-    x = 0.4124564 * r + 0.3575761 * g + 0.1804375 * b
-    y = 0.2126729 * r + 0.7151522 * g + 0.0721750 * b
-    z = 0.0193339 * r + 0.1191920 * g + 0.9503041 * b
-
-    return np.stack([x, y, z], axis=-1).astype(np.float32, copy=False)
-
-
 def xyz_to_lab(image: np.ndarray) -> np.ndarray:
     r"""Convert an XYZ image to Lab.
 
@@ -89,45 +36,6 @@ def xyz_to_lab(image: np.ndarray) -> np.ndarray:
     _b = 200.0 * (y - z)
 
     return np.stack([L, a, _b], axis=-1).astype(np.float32, copy=False)
-
-
-def rgb_to_lab(image: np.ndarray) -> np.ndarray:
-    r"""Convert a RGB image to Lab.
-
-    The input RGB image is assumed to be in the range of [0, 1]. Lab
-    color is computed using the D65 illuminant and Observer 2.
-
-    Args:
-        image: RGB image to be converted to Lab with shape (*, H, W, 3).
-
-    Returns:
-        Lab version of the image with shape (*, H, W, 3).
-        The L channel values are in the range 0..100. a and b are in the range -128..127.
-
-    Example:
-        >>> import numpy as np
-        >>> input_img = np.random.rand(2, 4, 5, 3)
-        >>> output_img = rgb_to_lab(input_img)  # Shape: (2, 4, 5, 3)
-    """
-    if not isinstance(image, np.ndarray):
-        raise TypeError(f"Input type is not a np.ndarray. Got {type(image)}")
-
-    if image.ndim < 3 or image.shape[-1] != 3:
-        raise ValueError(f"Input size must have a shape of (*, H, W, 3). Got {image.shape}")
-
-    # 1. Convert to Linear RGB
-    lin_rgb = rgb_to_linear_rgb(image)
-
-    # 2. Convert to XYZ
-    xyz_im = rgb_to_xyz(lin_rgb)
-
-    # 3. Convert XYZ -> Lab
-    return xyz_to_lab(xyz_im)
-
-
-# ==========================================
-# Part 2: Delta E Calculation Logic
-# ==========================================
 
 def _split_lab_channels(a: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
