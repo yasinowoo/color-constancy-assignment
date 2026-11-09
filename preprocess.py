@@ -9,8 +9,58 @@ def load_hsi(idx: int):
     return np.load(data_folder / f'hsi/{idx}.npy', allow_pickle=True).item()
 
 
+def read_illuminants() -> dict[str, np.ndarray]:
+    """
+    Illuminant spectra for white-point augmentation (FC4 training).
+
+    Returns:
+        {name: (bands,) spectrum} on the HSI wavelength grid
+    """
+    return np.load(data_folder / 'illuminants.npy', allow_pickle=True).item()
+
+
+def augment_whitepoint(hsi: np.ndarray, whitepatch_mask: np.ndarray,
+                       new_illuminant: np.ndarray):
+    """
+    Relight a scene with a new illuminant: divide HSI by the spectrum of the
+    white patch (estimate of the original illuminant) and multiply by the new one.
+
+    Args:
+        hsi: (height, width, bands)
+        whitepatch_mask: (height, width) boolean mask of the white patch
+        new_illuminant: (bands,) spectrum of the new illuminant
+    Returns:
+        (height, width, bands) relit HSI
+    """
+    spectra_whitepoint = ...
+    return hsi / spectra_whitepoint * new_illuminant
+
+
+HSI_SHAPE = (400, 700, 10)  # HSI wavelength range: 400-700 nm, 10 nm step -> 31 bands
+
+
 def load_sens(name: Literal['xyz_matching_fun', 'canon600d']):
-    return np.load(data_folder / f'sensitivity/{name}.npy')
+    """
+    Load spectral sensitivities from colour-science, resampled to the HSI grid
+    and normalised so that the green (Y / G) channel peaks at 1.
+
+    Returns:
+        (bands, 3) sensitivities
+    """
+    import colour
+
+    if name == 'xyz_matching_fun':
+        msds = colour.MSDS_CMFS['CIE 1931 2 Degree Standard Observer']
+    elif name == 'canon600d':
+        import colour_datasets
+        # Jiang et al. (2013) camera spectral sensitivity database
+        msds = colour_datasets.load('3245883')['Canon 600D']
+    else:
+        raise ValueError(f'Unknown sensitivity: {name}')
+
+    msds = msds.copy().align(colour.SpectralShape(*HSI_SHAPE))
+    sens = np.asarray(msds.values, dtype=np.float32)
+    return sens / sens[:, 1].max()
 
 
 def get_color_responses(hsi: np.ndarray, sens: np.ndarray):

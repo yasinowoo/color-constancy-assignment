@@ -1,0 +1,26 @@
+[project]
+name = "color-constancy-assignment"
+version = "0.1.0"
+description = "AWB and Color Space Transform assignment"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy",
+    "scipy",
+    "scikit-learn",
+    "matplotlib",
+    "colour-science",
+    "colour-datasets",
+    "torch",
+    "torchvision",
+    "tqdm",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "ipykernel",
+]
+
+[tool.uv]
+package = false
